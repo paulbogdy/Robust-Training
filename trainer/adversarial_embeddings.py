@@ -1,7 +1,10 @@
 from tqdm import tqdm
 import torch
 from torch.nn import CrossEntropyLoss
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from transformers import get_linear_schedule_with_warmup
 import os
+from torch.nn.utils import clip_grad_norm_
 
 def adversarial_perturbation(embeddings, model, attention_mask, labels, alpha, epsilon=0.3, attack_iters=3):
     # Get the gradients of the model
@@ -49,12 +52,18 @@ class AdversarialTrainer:
         # Ensure the save directory exists
         os.makedirs(save_dir, exist_ok=True)
 
-        print('Started Training')
+        max_grad_norm = 0.3
+        total_steps = len(train_loader) * num_epochs
+
+        warmup_steps = int(0.03 * total_steps)
+        
+        warmup_scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
+        cosine_scheduler = CosineAnnealingLR(self.optimizer, T_max=total_steps - warmup_steps)
 
         for epoch in range(start_epoch, num_epochs):
             total_loss = 0
-            pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}")
-            for batch in pbar:
+            pbar = tqdm(enumerate(train_loader), desc=f"Epoch {epoch+1}/{num_epochs}")
+            for batch_idx, batch in pbar:
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch['attention_mask'].to(self.device)
                 labels = batch['label'].to(self.device)
@@ -74,7 +83,15 @@ class AdversarialTrainer:
                 
                 # Backward pass and optimization
                 loss.backward()
+                clip_grad_norm_(self.model.parameters(), max_grad_norm)
                 self.optimizer.step()
+
+                if epoch * len(train_loader) + batch_idx < warmup_steps:
+                    warmup_scheduler.step()
+                else:
+                    cosine_scheduler.step()
+
+                self.optimizer.zero_grad()
 
             avg_loss = total_loss / len(train_loader)
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss}")
