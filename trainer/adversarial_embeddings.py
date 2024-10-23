@@ -74,9 +74,16 @@ class AdversarialTrainer:
 
                 # Forward pass with perturbed embeddings
                 self.model.zero_grad()
-                outputs_adv = self.model(inputs_embeds=perturbed_embeddings, attention_mask=attention_mask)
-                outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-                loss = beta * self.loss(outputs.logits, labels) + (1-beta) * self.loss(outputs_adv.logits, labels)
+                if (beta == 0):
+                    outputs_adv = self.model(inputs_embeds=perturbed_embeddings, attention_mask=attention_mask)
+                    loss = self.loss(outputs_adv.logits, labels)
+                elif (beta == 1):
+                    outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+                    loss = self.loss(outputs.logits, labels)
+                else:
+                    outputs_adv = self.model(inputs_embeds=perturbed_embeddings, attention_mask=attention_mask)
+                    outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+                    loss = beta * self.loss(outputs.logits, labels) + (1-beta) * self.loss(outputs_adv.logits, labels)
 
                 pbar.set_postfix({'Loss': f'{loss.item():.4}'})
                 total_loss += loss.item()
