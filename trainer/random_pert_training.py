@@ -66,7 +66,7 @@ class PerturbedTrainer:
             
             for batch_idx, batch in pbar:
                 # Apply perturbations to each sentence in the batch
-                inputs = [perturb_sentence(sentence, self.alphabet, q=q) for sentence in batch['input_sentence']]
+                inputs = [perturb_sentence(sentence, self.alphabet, q=q) for sentence in batch['sentence']]
                 labels = batch['label'].to(self.device)
 
                 # Tokenize perturbed inputs
