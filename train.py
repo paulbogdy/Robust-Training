@@ -54,22 +54,31 @@ def main(args):
                                 num_epochs=args.num_epochs,
                                 alpha=args.alpha,
                                 beta=args.beta,
+                                attack_iters=args.atack_iters,
                                 save_dir=args.save_dir)
     elif (args.training_method == 'random_pert'):
+
+        def get_alphabet():
+            if args.dataset_name == 'sst':
+                return ['æ', 'à', 'é', ' ', '!', '$', '%', '"', "'", '(', ')', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?',
+                        '‘', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ö']
+            else:
+                # Handle other datasets as needed
+                return None  # Or raise an error if no alphabet is set for other datasets
+
         # Initialize the PerturbedTrainer
         perturbed_trainer = PerturbedTrainer(model=model, 
                                             tokenizer=tokenizer, 
                                             optimizer=optimizer, 
                                             loss=loss, 
-                                            device=device)
+                                            device=device,
+                                            alphabet=get_alphabet())
 
         # Train the model
         perturbed_trainer.train(train_loader=train_loader,
                                 val_loader=val_loader,
-                                start_epoch=args.start_epoch,
+                                q=args.q,
                                 num_epochs=args.num_epochs,
-                                alpha=args.alpha,
-                                beta=args.beta,
                                 save_dir=args.save_dir)
 
 if __name__ == "__main__":
