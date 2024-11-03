@@ -9,4 +9,4 @@
 #SBATCH --qos gpu
 
 source ~/venvs/adv-train/bin/activate
-python train.py --model_name bert-base-uncased --dataset_name sst --batch_size 64 --learning_rate 2e-4 --alpha 1e-3 --beta 0 --num_epochs 5 --atack_iters 10 --save_dir adv_bert_base_sst
+python train.py --model_name bert-base-uncased --dataset_name sst --dataset_preprocess none --batch_size 64 --learning_rate 2e-4 --alpha 1e-3 --beta 0 --num_epochs 5 --atack_iters 10 --save_dir adv_bert_base_sst
