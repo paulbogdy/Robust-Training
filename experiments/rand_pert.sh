@@ -9,4 +9,4 @@
 #SBATCH --qos gpu
 
 source ~/venvs/adv-train/bin/activate
-python train.py --model_name bert-base-uncased --training_method random_pert --dataset_name sst --batch_size 64 --learning_rate 2e-4 --q 0.05 --num_epochs 5 --save_dir rand_pert_bert_base_sst
+python train.py --model_name bert-base-uncased --training_method random_pert --dataset_preprocess none --dataset_name sst --batch_size 64 --learning_rate 2e-4 --q 0.05 --num_epochs 5 --save_dir rand_pert_bert_base_sst

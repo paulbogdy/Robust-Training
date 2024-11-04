@@ -24,12 +24,15 @@ def perturb_sentence(sentence, alphabet, q=0.05, custom_char="§"):
     # Perform insertions
     insert_positions = random.sample(range(N), nr_insertions)
     for pos in insert_positions:
-        perturbed_sentence[2*pos + 1] = get_random_char()
+        new_char = get_random_char()
+        modified_pos = 2*pos + 1
+        perturbed_sentence = perturbed_sentence[:modified_pos] + new_char + perturbed_sentence[modified_pos + 1:]
     
     # Perform deletions
     delete_positions = random.sample(range(N), nr_deletions)
     for pos in delete_positions:
-        perturbed_sentence[2*pos] = custom_char
+        modified_pos = 2*pos
+        perturbed_sentence = perturbed_sentence[:modified_pos] + custom_char + perturbed_sentence[modified_pos + 1:]
 
     # Perform swaps
     swap_positions = random.sample(range(N), nr_swaps)
@@ -37,7 +40,8 @@ def perturb_sentence(sentence, alphabet, q=0.05, custom_char="§"):
         new_char = get_random_char()
         while (new_char == perturbed_sentence[2*pos]):
             new_char = get_random_char()
-        perturbed_sentence[2*pos] = new_char
+        modified_pos = 2*pos
+        perturbed_sentence = perturbed_sentence[:modified_pos] + new_char + perturbed_sentence[modified_pos + 1:]
     
     return ''.join(char if char != custom_char else '' for char in perturbed_sentence)
 
