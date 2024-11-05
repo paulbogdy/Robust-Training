@@ -19,4 +19,4 @@ python train.py \
     --learning_rate 2e-4 \
     --alpha 1e-3 \
     --beta 0.5 \
-    --atack_iters 10 \
+    --attack_iters 10 \

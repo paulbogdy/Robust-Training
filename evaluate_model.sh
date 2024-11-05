@@ -27,7 +27,7 @@ mkdir -p $final_results_path
 charmer_ks=(1 2 10)
 
 for k in ${charmer_ks[@]}; do
-    if [-f "$final_results_path/charmer_$k.csv"]; then
+    if [[ -f "$final_results_path/charmer_$k.csv" ]]; then
         echo "Charmer $k already exists, skipping..."
     else
         python attack.py \
@@ -49,7 +49,7 @@ done
 other_attacks=(textfooler deepwordbug)
 
 for attack in ${other_attacks[@]}; do
-    if [-f "$final_results_path/$attack.csv"]; then
+    if [[ -f "$final_results_path/$attack.csv" ]]; then
         echo "$attack already exists, skipping..."
     else
         python attack.py \

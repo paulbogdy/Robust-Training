@@ -75,7 +75,7 @@ class AdvEmbTrainer:
                 attention_mask = tokenized_inputs['attention_mask'].to(self.device)
                 
                 # Get the token embeddings from the input_ids
-                embeddings = self.model.embeddings(input_ids)
+                embeddings = self.model.input_embeddings(input_ids)
                 perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
 
                 # Forward pass with perturbed embeddings
