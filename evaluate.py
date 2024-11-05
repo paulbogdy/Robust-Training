@@ -79,4 +79,9 @@ if __name__ == "__main__":
 
     # Generate and display the summary table
     summary_table = summarize_attack_folder(folder_path)
+    
+    # Set pandas display options to show the entire DataFrame
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', None)
+    
     print(summary_table)

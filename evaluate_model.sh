@@ -11,7 +11,17 @@
 source ~/venvs/mnlp/bin/activate
 
 model_name=rand_pert_bert_base_sst # Modify the model name to evaluate other models
-mv ../Robust-Training/$model_name . 
+if [ -d "./$model_name" ]; then
+    echo "Model directory $model_name already exists in the current directory."
+elif [ -d "../Robust-Training/$model_name" ]; then
+    # Move the model directory if it exists in ../Robust-Training
+    mv ../Robust-Training/$model_name .
+    echo "Moved $model_name from ../Robust-Training to the current directory."
+else
+    # Stop the script if the model directory does not exist in either location
+    echo "Model directory $model_name does not exist in ../Robust-Training. Exiting."
+    exit 1
+fi
 
 model_path=./$model_name/model_e5 # Modify the epoch if needed
 dataset=sst # Modify the dataset if needed
@@ -27,7 +37,7 @@ mkdir -p $final_results_path
 charmer_ks=(1 2 10)
 
 for k in ${charmer_ks[@]}; do
-    if [[ -f "$final_results_path/charmer_$k.csv" ]]; then
+    if [ -f "$final_results_path/charmer_$k.csv" ]; then
         echo "Charmer $k already exists, skipping..."
     else
         python attack.py \
@@ -49,7 +59,7 @@ done
 other_attacks=(textfooler deepwordbug)
 
 for attack in ${other_attacks[@]}; do
-    if [[ -f "$final_results_path/$attack.csv" ]]; then
+    if [ -f "$final_results_path/$attack.csv" ]; then
         echo "$attack already exists, skipping..."
     else
         python attack.py \
