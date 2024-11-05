@@ -4,10 +4,11 @@ from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from transformers import get_linear_schedule_with_warmup, AdamW
+from models.model_wrapper import ModelWrapper
 from torch.nn.utils import clip_grad_norm_
 
 class AdvEmbTrainer:
-    def __init__(self, model_wrapper, device, args):
+    def __init__(self, model_wrapper: ModelWrapper, device, args):
         self.model = model_wrapper
         self.optimizer = AdamW(self.model.parameters(), lr=args.learning_rate)
         self.loss = CrossEntropyLoss()
@@ -32,7 +33,7 @@ class AdvEmbTrainer:
         perturbed_embeddings.requires_grad = True
         for _ in range(attack_iters):
             self.model.zero_grad()
-            outputs = self.model.forward_embeddings(inputs_embeds=perturbed_embeddings, attention_mask=attention_mask)
+            outputs = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
             loss = self.loss(outputs.logits, labels)
             loss.backward()
             
@@ -81,13 +82,13 @@ class AdvEmbTrainer:
                 # Forward pass with perturbed embeddings
                 self.model.zero_grad()
                 if (self.beta == 0):
-                    outputs_adv = self.model.forward_embeddings(inputs_embeds=perturbed_embeddings, attention_mask=attention_mask)
+                    outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
                     loss = self.loss(outputs_adv.logits, labels)
                 elif (self.beta == 1):
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
                     loss = self.loss(outputs.logits, labels)
                 else:
-                    outputs_adv = self.model.forward_embeddings(inputs_embeds=perturbed_embeddings, attention_mask=attention_mask)
+                    outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
                     loss = self.beta * self.loss(outputs.logits, labels) + (1-self.beta) * self.loss(outputs_adv.logits, labels)
 
