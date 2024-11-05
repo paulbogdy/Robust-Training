@@ -1,103 +1,93 @@
 import argparse
-import torch
-from torch.nn import CrossEntropyLoss
 from transformers import AdamW
-from models.model_factory import load_model_and_tokenizer
+from models.model_wrapper import ModelWrapper
 from data.dataloader import load_dataset
-from data.preprocess import tokenized_dataloader
-from data.preprocess import normal_dataloader
-from trainer.adversarial_embeddings import AdversarialTrainer
+from utils import get_alphabet
+from torch.utils.data import DataLoader
+from trainers import AdvEmbTrainer, RandCharTrainer
 from trainer.random_pert_training import PerturbedTrainer
+import torch
+import random
+import numpy as np
 
 def main(args):
-    model_name = args.model_name
+     # Set the random seed for reproducibility
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
 
-    if (args.continue_training):
-        model_name = f'./{args.save_dir}/model_epoch_{args.start_epoch}'
+    dataset, num_labels = load_dataset(args.dataset_name)
+    model_wrapper = ModelWrapper(args.model_name, num_labels=num_labels)
 
-    print(f'Training adversarially for model: {model_name}')
+    # Set up data loaders based on preprocessing type
+    train_loader = DataLoader(dataset['train'], batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(dataset['validation'], batch_size=args.batch_size, shuffle=False)
 
-    # Load model and tokenizer
-    model, tokenizer = load_model_and_tokenizer(model_name, num_labels=args.num_labels)
+    # Initialize device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model_wrapper.model.to(device)
 
-    # Load dataset and dataloaders
-    dataset = load_dataset(args.dataset_name)
-    if args.dataset_preprocess == 'tokenize':
-        train_loader = tokenized_dataloader(data=dataset['train'], tokenizer=tokenizer, batch_size=args.batch_size, shuffle=True)
-    elif args.dataset_preprocess == 'none':
-        train_loader = normal_dataloader(data=dataset['train'], batch_size=args.batch_size, shuffle=True)
-    
-    val_loader = tokenized_dataloader(data=dataset['validation'], tokenizer=tokenizer, batch_size=args.batch_size, shuffle=False)
+    # Select the training method and initialize accordingly
+    if args.training_method == 'adv_emb':
+        trainer = AdvEmbTrainer(model_wrapper, device, args)
+    elif args.training_method == 'rand_char':
+        trainer = RandCharTrainer(model_wrapper, get_alphabet(), device, args)
 
-    print(f'Loaded Train dataset with {len(train_loader.dataset)} samples')
-    print(f'Loaded Validation dataset with {len(val_loader.dataset)} samples')
+    save_path = f'{args.model_name}_{args.dataset_name}_seed{args.seed}_batch{args.batch_size}_lr{str(args.learning_rate).replace(".", "_")}'
 
-    # Initialize optimizer and loss function
-    optimizer = AdamW(model.parameters(), lr=args.learning_rate)
-    loss = CrossEntropyLoss()
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-    model.to(device)
-
-    if (args.training_method == 'adv_emb'):
-        # Initialize the AdversarialTrainer
-        adversarial_trainer = AdversarialTrainer(model=model, 
-                                                tokenizer=tokenizer, 
-                                                optimizer=optimizer, 
-                                                loss=loss, 
-                                                device=device)
-
-        # Train the model
-        adversarial_trainer.train(train_loader=train_loader,
-                                val_loader=val_loader,
-                                start_epoch=args.start_epoch,
-                                num_epochs=args.num_epochs,
-                                alpha=args.alpha,
-                                beta=args.beta,
-                                attack_iters=args.atack_iters,
-                                save_dir=args.save_dir)
-    elif (args.training_method == 'random_pert'):
-
-        def get_alphabet():
-            if args.dataset_name == 'sst':
-                return ['æ', 'à', 'é', ' ', '!', '$', '%', '"', "'", '(', ')', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?',
-                        '‘', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ö']
-            else:
-                # Handle other datasets as needed
-                return None  # Or raise an error if no alphabet is set for other datasets
-
-        # Initialize the PerturbedTrainer
-        perturbed_trainer = PerturbedTrainer(model=model, 
-                                            tokenizer=tokenizer, 
-                                            optimizer=optimizer, 
-                                            loss=loss, 
-                                            device=device,
-                                            alphabet=get_alphabet())
-
-        # Train the model
-        perturbed_trainer.train(train_loader=train_loader,
-                                val_loader=val_loader,
-                                q=args.q,
-                                num_epochs=args.num_epochs,
-                                save_dir=args.save_dir)
+    trainer.train(train_loader, val_loader, save_path=save_path, num_epochs=args.num_epochs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model with adversarial training.")
-    parser.add_argument('--model_name', type=str, default='bert-base-uncased', help='Name of the model to load.')
-    parser.add_argument('--continue_training', type=bool, default=False, help='Whether or not to continue training.')
-    parser.add_argument('--dataset_name', type=str, default='sst', help='Name of the dataset to load.')
-    parser.add_argument('--dataset_preprocess', type=str, default='tokenize', help='Preprocessing steps to apply to the dataset.')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and validation.')
-    parser.add_argument('--learning_rate', type=float, default=5e-5, help='Learning rate for the optimizer.')
-    parser.add_argument('--num_epochs', type=int, default=3, help='Number of epochs to train the model.')
-    parser.add_argument('--start_epoch', type=int, default=0, help='The starting epoch of the training.')
-    parser.add_argument('--training_method', type=str, default='adv_emb', help='The training method to use.')
-    parser.add_argument('--alpha', type=float, default=1e-3, help='Alpha value for adversarial perturbation.')
-    parser.add_argument('--beta', type=float, default=0.5, help='Beta value for adversarial / clear switch (> beta / > clear).')
-    parser.add_argument('--atack_iters', type=int, default=3, help='The number of iterations for the embedding adversarial attack.')
-    parser.add_argument('--q', type=float, default=0.05, help='The perturbation rate for random perturbations.')
-    parser.add_argument('--save_dir', type=str, default='saved_models', help='Directory to save the trained models.')
-    parser.add_argument('--num_labels', type=int, default=2, help='Number of labels for the classification task.')
+
+    # General arguments
+    parser.add_argument(
+        '--model_name',
+        type=str, 
+        default='bert', 
+        choices=['bert', 'roberta', 'albert'],
+        help='Name of the model to train.')
+    parser.add_argument(
+        '--dataset_name', 
+        type=str, 
+        default='sst', 
+        choices=['sst'],
+        help='Name of the dataset to train on.')
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='Random seed for reproducibility.')
+    parser.add_argument(
+        '--training_method', 
+        type=str, 
+        choices=['adv_emb', 'rand_char'], 
+        required=True,
+        help='Training method to use.')
+    parser.add_argument(
+        '--num_epochs', 
+        type=int, 
+        default=5,
+        help='Number of epochs to train.')
+    parser.add_argument(
+        '--batch_size', 
+        type=int, 
+        default=32,
+        help='Batch size for training.')
+    parser.add_argument(
+        '--learning_rate', 
+        type=float, 
+        default=2e-4,
+        help='Learning rate for the optimizer.')
+
+    # Add method-specific arguments dynamically
+    args, remaining_args = parser.parse_known_args()
+    if args.training_method == 'adv_emb':
+        parser = AdvEmbTrainer.add_args(parser)
+    elif args.training_method == 'rand_char':
+        parser = RandCharTrainer.add_args(parser)
 
     args = parser.parse_args()
     main(args)
