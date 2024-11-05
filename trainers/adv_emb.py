@@ -65,7 +65,7 @@ class AdvEmbTrainer:
 
         for epoch in range(num_epochs):
             total_loss = 0
-            pbar = tqdm(enumerate(train_loader), desc=f"Epoch {epoch+1}/{num_epochs}")
+            pbar = tqdm(enumerate(train_loader), desc=f"Epoch {epoch+1}/{num_epochs}", total=len(train_loader))
             for batch_idx, batch in pbar:
                 inputs = batch['sentence']
                 labels = batch['label'].to(self.device)
@@ -74,20 +74,24 @@ class AdvEmbTrainer:
                 tokenized_inputs = self.model.tokenize(inputs)
                 input_ids = tokenized_inputs['input_ids'].to(self.device)
                 attention_mask = tokenized_inputs['attention_mask'].to(self.device)
-                
-                # Get the token embeddings from the input_ids
-                embeddings = self.model.input_embeddings(input_ids)
-                perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
 
                 # Forward pass with perturbed embeddings
                 self.model.zero_grad()
                 if (self.beta == 0):
+                    # Get the token embeddings from the input_ids
+                    embeddings = self.model.input_embeddings(input_ids)
+                    perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
+
                     outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
                     loss = self.loss(outputs_adv.logits, labels)
                 elif (self.beta == 1):
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
                     loss = self.loss(outputs.logits, labels)
                 else:
+                    # Get the token embeddings from the input_ids
+                    embeddings = self.model.input_embeddings(input_ids)
+                    perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
+
                     outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
                     loss = self.beta * self.loss(outputs.logits, labels) + (1-self.beta) * self.loss(outputs_adv.logits, labels)

@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-import tqdm
+from tqdm import tqdm
 
 class ModelWrapper:
     def __init__(self, model_name: str, num_labels: int):
