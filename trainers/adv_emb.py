@@ -121,6 +121,5 @@ class AdvEmbTrainer:
             
             # Save the model
             save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')
-            self.model.save_pretrained(save_path)
-            self.tokenizer.save_pretrained(save_path)
+            self.model.save(save_path)
             print(f"Model saved to {save_path}")
