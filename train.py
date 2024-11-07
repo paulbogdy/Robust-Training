@@ -1,10 +1,9 @@
 import argparse
-from transformers import AdamW
 from models.model_wrapper import ModelWrapper
 from data.dataloader import load_dataset
 from utils import get_alphabet
 from torch.utils.data import DataLoader
-from trainers import AdvEmbTrainer, RandCharTrainer
+from trainers import AdvEmbTrainer, RandCharTrainer, BaseTrainer
 from trainer.random_pert_training import PerturbedTrainer
 import torch
 import random
@@ -34,6 +33,8 @@ def main(args):
         trainer = AdvEmbTrainer(model_wrapper, device, args)
     elif args.training_method == 'rand_char':
         trainer = RandCharTrainer(model_wrapper, get_alphabet(), device, args)
+    elif args.training_method == 'base':
+        trainer = BaseTrainer(model_wrapper, device, args)
 
     save_path = f'{args.model_name}_{args.dataset_name}_seed{args.seed}_batch{args.batch_size}_lr{str(args.learning_rate).replace(".", "_")}'
 

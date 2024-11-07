@@ -81,7 +81,6 @@ class AdvEmbTrainer:
                     # Get the token embeddings from the input_ids
                     embeddings = self.model.input_embeddings(input_ids)
                     perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
-
                     outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
                     loss = self.loss(outputs_adv.logits, labels)
                 elif (self.beta == 1):
@@ -91,7 +90,6 @@ class AdvEmbTrainer:
                     # Get the token embeddings from the input_ids
                     embeddings = self.model.input_embeddings(input_ids)
                     perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
-
                     outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
                     loss = self.beta * self.loss(outputs.logits, labels) + (1-self.beta) * self.loss(outputs_adv.logits, labels)
@@ -120,6 +118,6 @@ class AdvEmbTrainer:
             self.model.train()
             
             # Save the model
-            save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')
-            self.model.save(save_path)
-            print(f"Model saved to {save_path}")
+            epoch_save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')
+            self.model.save(epoch_save_path)
+            print(f"Model saved to {epoch_save_path}")

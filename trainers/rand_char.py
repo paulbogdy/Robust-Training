@@ -115,7 +115,6 @@ class RandCharTrainer:
             self.model.train()
 
             # Save model and tokenizer
-            epoch_save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_epoch_{epoch+1}')
-            self.model.save_pretrained(epoch_save_path)
-            self.model.tokenizer.save_pretrained(epoch_save_path)
+            epoch_save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')
+            self.model.save(epoch_save_path)
             print(f"Model saved to {epoch_save_path}")
