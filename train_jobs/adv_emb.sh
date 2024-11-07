@@ -14,9 +14,9 @@ python train.py \
     --dataset_name sst \
     --seed 0 \
     --training_method adv_emb \
-    --num_epochs 5 \
-    --batch_size 64 \
-    --learning_rate 2e-4 \
+    --num_epochs 4 \
+    --batch_size 16 \
+    --learning_rate 2e-5 \
     --alpha 1e-3 \
-    --beta 0.5 \
+    --beta 0 \
     --attack_iters 10 \

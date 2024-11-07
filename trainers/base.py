@@ -1,7 +1,6 @@
 import os
 from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
-from torch.optim.lr_scheduler import CosineAnnealingLR
 from transformers import get_linear_schedule_with_warmup, AdamW
 from torch.nn.utils import clip_grad_norm_
 from models.model_wrapper import ModelWrapper

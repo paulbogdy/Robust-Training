@@ -6,13 +6,16 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from transformers import get_linear_schedule_with_warmup, AdamW
 from models.model_wrapper import ModelWrapper
 from torch.nn.utils import clip_grad_norm_
+import torch
 
 class AdvEmbTrainer:
     def __init__(self, model_wrapper: ModelWrapper, device, args):
         self.model = model_wrapper
-        self.optimizer = AdamW(self.model.parameters(), lr=args.learning_rate)
-        self.loss = CrossEntropyLoss()
         self.device = device
+        self.optimizer = AdamW(self.model.parameters(), lr=args.learning_rate, weight_decay=0.01)
+        self.loss_fn = CrossEntropyLoss()
+        self.warmup_proportion = 0.1
+        self.max_grad_norm = 1.0
 
         self.alpha = args.alpha
         self.beta = args.beta
@@ -29,24 +32,21 @@ class AdvEmbTrainer:
 
     def adversarial_perturbation(self, embeddings, attention_mask, labels, alpha, attack_iters):
         # Get the gradients of the model
-        perturbed_embeddings = embeddings.detach()
-        perturbed_embeddings.requires_grad = True
+        e = embeddings.detach()
+        delta = torch.zeros_like(e, requires_grad=True)
+
         for _ in range(attack_iters):
-            self.model.zero_grad()
-            outputs = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
-            loss = self.loss(outputs.logits, labels)
+            outputs = self.model.forward_embeddings(input_embeds=e + delta, attention_mask=attention_mask)
+            loss = self.loss_fn(outputs.logits, labels)
+
             loss.backward()
             
-            # Get the sign of the gradients
-            gradients = perturbed_embeddings.grad.sign()
+            with torch.no_grad():
+                delta += alpha * delta.grad.sign()
             
-            # Perturb the embeddings in-place
-            perturbed_embeddings = perturbed_embeddings + alpha * gradients
-            
-            perturbed_embeddings = perturbed_embeddings.detach()
-            perturbed_embeddings.requires_grad = True
+            delta.grad.zero_()
 
-        return perturbed_embeddings
+        return delta.detach()
 
     def train(self, 
               train_loader,
@@ -55,13 +55,12 @@ class AdvEmbTrainer:
               num_epochs=5):
         self.model.train()
 
-        max_grad_norm = 0.3
+        # Total steps for learning rate scheduling
         total_steps = len(train_loader) * num_epochs
-
-        warmup_steps = int(0.03 * total_steps)
+        warmup_steps = int(self.warmup_proportion * total_steps)
         
-        warmup_scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
-        cosine_scheduler = CosineAnnealingLR(self.optimizer, T_max=total_steps - warmup_steps)
+        # Learning rate schedulers
+        scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
 
         for epoch in range(num_epochs):
             total_loss = 0
@@ -76,41 +75,38 @@ class AdvEmbTrainer:
                 attention_mask = tokenized_inputs['attention_mask'].to(self.device)
 
                 # Forward pass with perturbed embeddings
-                self.model.zero_grad()
+                self.optimizer.zero_grad()
                 if (self.beta == 0):
                     # Get the token embeddings from the input_ids
                     embeddings = self.model.input_embeddings(input_ids)
-                    perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
-                    outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
-                    loss = self.loss(outputs_adv.logits, labels)
+                    delta = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
+                    outputs_adv = self.model.forward_embeddings(input_embeds=embeddings + delta, attention_mask=attention_mask)
+                    loss = self.loss_fn(outputs_adv.logits, labels)
                 elif (self.beta == 1):
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
-                    loss = self.loss(outputs.logits, labels)
+                    loss = self.loss_fn(outputs.logits, labels)
                 else:
                     # Get the token embeddings from the input_ids
                     embeddings = self.model.input_embeddings(input_ids)
-                    perturbed_embeddings = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
-                    outputs_adv = self.model.forward_embeddings(input_embeds=perturbed_embeddings, attention_mask=attention_mask)
+                    delta = self.adversarial_perturbation(embeddings, attention_mask, labels, self.alpha, self.attack_iters)
+                    outputs_adv = self.model.forward_embeddings(input_embeds=embeddings + delta, attention_mask=attention_mask)
                     outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
-                    loss = self.beta * self.loss(outputs.logits, labels) + (1-self.beta) * self.loss(outputs_adv.logits, labels)
-
-                pbar.set_postfix({'Loss': f'{loss.item():.4}'})
-                total_loss += loss.item()
+                    loss = self.beta * self.loss_fn(outputs.logits, labels) + (1-self.beta) * self.loss_fn(outputs_adv.logits, labels)
                 
                 # Backward pass and optimization
                 loss.backward()
-                clip_grad_norm_(self.model.parameters(), max_grad_norm)
+                clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
                 self.optimizer.step()
 
-                if epoch * len(train_loader) + batch_idx < warmup_steps:
-                    warmup_scheduler.step()
-                else:
-                    cosine_scheduler.step()
+                # Update scheduler
+                scheduler.step()
 
-                self.optimizer.zero_grad()
+                # Logging loss
+                total_loss += loss.item()
+                pbar.set_postfix({'Loss': f'{loss.item():.4f}'})
 
             avg_loss = total_loss / len(train_loader)
-            print(f"Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss}")
+            print(f"Epoch {epoch+1}/{num_epochs}, Average Loss: {avg_loss}")
 
             # Validate the model
             val_accuracy = self.model.evaluate(val_loader, self.device)
