@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'rand_char'], 
+        choices=['adv_emb', 'rand_char', 'base'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
