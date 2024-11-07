@@ -65,7 +65,7 @@ class BaseTrainer:
                 pbar.set_postfix({'Loss': f'{loss.item():.4f}'})
 
             avg_loss = total_loss / len(train_loader)
-            print(f"Epoch {epoch+1}/{self.num_epochs}, Average Loss: {avg_loss:.4f}")
+            print(f"Epoch {epoch+1}/{num_epochs}, Average Loss: {avg_loss:.4f}")
 
             # Validation step
             val_accuracy = self.model.evaluate(val_loader, self.device)
