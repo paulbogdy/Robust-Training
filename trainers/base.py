@@ -4,9 +4,10 @@ from torch.nn import CrossEntropyLoss
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from transformers import get_linear_schedule_with_warmup, AdamW
 from torch.nn.utils import clip_grad_norm_
+from models.model_wrapper import ModelWrapper
 
 class BaseTrainer:
-    def __init__(self, model_wrapper, device, args):
+    def __init__(self, model_wrapper: ModelWrapper, device, args):
         """
         Initialize the BaseTrainer with model, device, optimizer, and other configurations.
         """
@@ -48,7 +49,7 @@ class BaseTrainer:
 
                 # Forward pass
                 self.optimizer.zero_grad()
-                outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+                outputs = self.model.forward(input_ids=input_ids, attention_mask=attention_mask)
                 loss = self.loss_fn(outputs.logits, labels)
 
                 # Backward pass and optimization
