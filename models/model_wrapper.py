@@ -39,7 +39,7 @@ class ModelWrapper:
         """
         return self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
 
-    def forward(self, input_ids, attention_mask=None):
+    def forward(self, input_ids, attention_mask=None, output_hidden_states=False):
         """
         Forward pass of the model.
         Args:
@@ -48,9 +48,9 @@ class ModelWrapper:
         Returns:
             output: Model output, typically logits
         """
-        return self.model(input_ids=input_ids, attention_mask=attention_mask)
+        return self.model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=output_hidden_states)
     
-    def forward_embeddings(self, input_embeds, attention_mask=None):
+    def forward_embeddings(self, input_embeds, attention_mask=None, output_hidden_states=False):
         """
         Forward pass of the model using input embeddings.
         Args:
@@ -59,7 +59,7 @@ class ModelWrapper:
         Returns:
             output: Model output, typically logits
         """
-        return self.model(inputs_embeds=input_embeds, attention_mask=attention_mask)
+        return self.model(inputs_embeds=input_embeds, attention_mask=attention_mask, output_hidden_states=output_hidden_states)
     
     def input_embeddings(self, inputs):
         """
