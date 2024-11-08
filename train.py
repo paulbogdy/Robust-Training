@@ -32,7 +32,7 @@ def main(args):
     if args.training_method == 'adv_emb':
         trainer = AdvEmbTrainer(model_wrapper, device, args)
     elif args.training_method == 'rand_char':
-        trainer = RandCharTrainer(model_wrapper, get_alphabet(), device, args)
+        trainer = RandCharTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'base':
         trainer = BaseTrainer(model_wrapper, device, args)
 
