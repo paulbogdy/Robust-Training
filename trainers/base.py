@@ -69,7 +69,6 @@ class BaseTrainer:
             # Validation step
             val_accuracy = self.model.evaluate(val_loader, self.device)
             print(f"Validation Accuracy: {val_accuracy:.4f}")
-            self.model.train()
 
             # Save the model after each epoch
             epoch_save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')

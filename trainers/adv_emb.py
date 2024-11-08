@@ -53,7 +53,6 @@ class AdvEmbTrainer:
               val_loader,
               save_path,
               num_epochs=5):
-        self.model.train()
 
         # Total steps for learning rate scheduling
         total_steps = len(train_loader) * num_epochs
@@ -64,6 +63,7 @@ class AdvEmbTrainer:
 
         for epoch in range(num_epochs):
             total_loss = 0
+            self.model.train()
             pbar = tqdm(enumerate(train_loader), desc=f"Epoch {epoch+1}/{num_epochs}", total=len(train_loader))
             for batch_idx, batch in pbar:
                 inputs = batch['sentence']
@@ -111,7 +111,6 @@ class AdvEmbTrainer:
             # Validate the model
             val_accuracy = self.model.evaluate(val_loader, self.device)
             print(f"Validation Accuracy: {val_accuracy:.4f}")
-            self.model.train()
             
             # Save the model
             epoch_save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')
