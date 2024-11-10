@@ -60,13 +60,16 @@ class RandCharV3Trainer:
         self.max_grad_norm = 1.0
 
         self.alphabet = alphabet
+
         self.q = args.q
+        self.alpha = args.alpha
         
-        self.base_path = f'rand_char_q{self.q}'
+        self.base_path = f'rand_char_v3_q{self.q}_a{str(self.alpha).replace(".", "_")}'
     
     @staticmethod
     def add_args(parser):
         parser.add_argument('--q', type=int, default=5, help='Perturbation rate %(0-100)')
+        parser.add_argument('--alpha', type=float, default=1, help='Weight for smooth loss')
         return parser
 
     def train(self, train_loader, val_loader, save_path, num_epochs):
