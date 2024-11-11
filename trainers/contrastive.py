@@ -214,7 +214,7 @@ class ContrastiveTrainer:
         negatives = similarity_matrix[~labels.bool()].view(labels.shape[0], -1)
 
         logits = torch.cat([positives, negatives], dim=1)
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
+        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.device)
 
         logits /= self.temperature
         return F.cross_entropy(logits, labels)
