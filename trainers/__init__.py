@@ -5,4 +5,5 @@ from trainers.rand_char_v3 import RandCharV3Trainer
 from trainers.base import BaseTrainer
 from trainers.contrastive import ContrastiveTrainer
 from trainers.contrastive_v2 import ContrastiveV2Trainer
+from trainers.contrastive_v3 import ContrastiveV3Trainer
 from trainers.rand_mask import RandMaskTrainer
