@@ -3,7 +3,7 @@ from models.model_wrapper import ModelWrapper
 from data.dataloader import load_dataset
 from utils import get_alphabet
 from torch.utils.data import DataLoader
-from trainers import AdvEmbTrainer, RandCharTrainer, RandCharV2Trainer, RandCharV3Trainer, BaseTrainer, ContrastiveTrainer, ContrastiveV2Trainer, ContrastiveV3Trainer, RandMaskTrainer
+from trainers import *
 import torch
 import random
 import numpy as np
@@ -42,6 +42,8 @@ def main(args):
         trainer = ContrastiveV2Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'contrastive_v3':
         trainer = ContrastiveV3Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
+    elif args.training_method == 'contrastive_v4':
+        trainer = ContrastiveV4Trainer(model_wrapper, device, args)
     elif args.training_method == 'rand_mask':
         trainer = RandMaskTrainer(model_wrapper, device, args)
     elif args.training_method == 'base':
@@ -75,7 +77,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'rand_mask'], 
+        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'rand_mask'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
@@ -110,6 +112,8 @@ if __name__ == "__main__":
         parser = ContrastiveV2Trainer.add_args(parser)
     elif args.training_method == 'contrastive_v3':
         parser = ContrastiveV3Trainer.add_args(parser)
+    elif args.training_method == 'contrastive_v4':
+        parser = ContrastiveV4Trainer.add_args(parser)
     elif args.training_method == 'rand_mask':
         parser = RandMaskTrainer.add_args(parser)
 
