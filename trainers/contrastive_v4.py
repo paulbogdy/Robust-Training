@@ -86,14 +86,14 @@ class ContrastiveV4Trainer:
                 loss = self.loss_fn(unperturbed_logits, labels)
 
                 loss.backward(retain_graph=True)
-                embeddings_matrix_grad = self.model.model.embeddings.word_embeddings.weight.grad
+                embeddings_matrix_grad = self.model.model.base_model.embeddings.word_embeddings.weight.grad
 
                 # Adversarial perturbation
                 perturbation = perturbation = self.epsilon * embeddings_matrix_grad.sign()
 
                 with torch.no_grad():
                     perturbed_embeddings = (
-                        self.model.model.embeddings.word_embeddings.weight + perturbation
+                        self.model.model.base_model.embeddings.word_embeddings.weight + perturbation
                     )
 
                 # Forward pass for perturbed inputs to obtain [CLS] embeddings
