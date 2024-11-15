@@ -1,7 +1,7 @@
 import argparse
 from models.model_wrapper import ModelWrapper
 from data.dataloader import load_dataset
-from utils import get_alphabet
+from utils import get_alphabet, get_alphabet_distribution
 from torch.utils.data import DataLoader
 from trainers import *
 import torch
@@ -36,6 +36,8 @@ def main(args):
         trainer = RandCharV2Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'rand_char_v3':
         trainer = RandCharV3Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
+    elif args.training_method == 'rand_char_v4':
+        trainer = RandCharV4Trainer(model_wrapper, get_alphabet(args.dataset_name), get_alphabet_distribution(args.dataset_name), device, args)
     elif args.training_method == 'contrastive':
         trainer = ContrastiveTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'contrastive_v2':
@@ -106,6 +108,8 @@ if __name__ == "__main__":
         parser = RandCharV2Trainer.add_args(parser)
     elif args.training_method == 'rand_char_v3':
         parser = RandCharV3Trainer.add_args(parser)
+    elif args.training_method == 'rand_char_v4':
+        parser = RandCharV4Trainer.add_args(parser)
     elif args.training_method == 'contrastive':
         parser = ContrastiveTrainer.add_args(parser)
     elif args.training_method == 'contrastive_v2':
