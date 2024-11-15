@@ -97,8 +97,8 @@ class ContrastiveV4Trainer:
                     )
 
                 # Forward pass for perturbed inputs to obtain [CLS] embeddings
-                outputs_perturbed = self.model.forward(
-                    input_ids=perturbed_embeddings[input_ids_unperturbed],
+                outputs_perturbed = self.model.forward_embeddings(
+                    input_embeds=perturbed_embeddings[input_ids_unperturbed],
                     attention_mask=attention_mask_unperturbed,
                     output_hidden_states=True
                 )
