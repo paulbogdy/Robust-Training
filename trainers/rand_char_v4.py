@@ -6,7 +6,7 @@ from torch.nn.utils import clip_grad_norm_
 from models.model_wrapper import ModelWrapper
 import random
 
-def perturb_sentence(sentence, alphabet, alphabet_distribution, position_distribution, q=5, insertion_rate=0.5, deletion_rate=0.25, custom_char="§"):
+def perturb_sentence(sentence, alphabet, alphabet_distribution, position_distribution, q, insertion_rate, deletion_rate, custom_char="§"):
     N = len(sentence)
     perturbed_sentence = ''.join([char + custom_char for char in sentence])
 
@@ -102,7 +102,7 @@ class RandCharV4Trainer:
 
             for batch_idx, batch in pbar:
                 # Perturb inputs
-                inputs = [perturb_sentence(sentence, self.alphabet, self.compute_alphabet_distribution(), self.compute_position_distribution(sentence), q=self.q) for sentence in batch['sentence']]
+                inputs = [perturb_sentence(sentence, self.alphabet, self.compute_alphabet_distribution(), self.compute_position_distribution(sentence), q=self.q, insertion_rate=self.insertion_rate, deletion_rate=self.deletion_rate) for sentence in batch['sentence']]
                 labels = batch['label'].to(self.device)
 
                 # Tokenize perturbed inputs
