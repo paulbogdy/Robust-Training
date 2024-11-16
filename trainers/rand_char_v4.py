@@ -17,7 +17,7 @@ def perturb_sentence(sentence, alphabet, alphabet_distribution, position_distrib
 
     def get_random_char():
         # Sample from the alphabet distribution
-        return random.choice(alphabet, weights=alphabet_distribution, k=1)[0]
+        return random.choices(alphabet, weights=alphabet_distribution, k=1)[0]
 
     # Perform insertions
     insert_positions = random.choices(range(N), weights=position_distribution, k=nr_insertions)
