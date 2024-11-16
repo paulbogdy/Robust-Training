@@ -16,11 +16,19 @@ def main(args):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
 
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    def seed_worker(worker_id):
+        worker_seed = torch.initial_seed() % 2**32
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
+
     dataset, num_labels = load_dataset(args.dataset_name)
     model_wrapper = ModelWrapper(args.model_name, num_labels=num_labels)
 
     # Set up data loaders based on preprocessing type
-    train_loader = DataLoader(dataset['train'], batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(dataset['train'], batch_size=args.batch_size, shuffle=True, worker_init_fn=seed_worker)
     val_loader = DataLoader(dataset['validation'], batch_size=args.batch_size, shuffle=False)
 
     # Initialize device
@@ -37,7 +45,7 @@ def main(args):
     elif args.training_method == 'rand_char_v3':
         trainer = RandCharV3Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'rand_char_v4':
-        trainer = RandCharV4Trainer(model_wrapper, get_alphabet(args.dataset_name), get_alphabet_distribution(args.dataset_name), device, args)
+        trainer = RandCharV4Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'contrastive':
         trainer = ContrastiveTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'contrastive_v2':
@@ -79,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'rand_mask'], 
+        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'rand_mask'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(

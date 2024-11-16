@@ -8,15 +8,3 @@ def get_alphabet(dataset_name: str):
         # Handle other datasets as needed
         return None  # Or raise an error if no alphabet is set for other datasets
     
-def get_alphabet_distribution(dataset_name: str):
-    if dataset_name == 'sst':
-        most_impotant_chars = ['’', '!', '(', ',', '.']
-        alphabet = get_alphabet(dataset_name)
-        alphabet_distribution = [2 if char in most_impotant_chars else 1 for char in alphabet]
-        # normalize the distribution
-        alphabet_distribution = [x / sum(alphabet_distribution) for x in alphabet_distribution]
-        return alphabet_distribution
-    else:
-        # Handle other datasets as needed
-        return None
-        

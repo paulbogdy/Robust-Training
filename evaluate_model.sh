@@ -4,13 +4,13 @@
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 6G
-#SBATCH --time 1:30:00
+#SBATCH --time 1:45:00
 #SBATCH --gres gpu:1
 #SBATCH --qos gpu
 
 source ~/venvs/mnlp/bin/activate
 
-model_name=rand_pert_bert_base_sst # Modify the model name to evaluate other models
+model_name=$1 # Modify the model name to evaluate other models
 if [ -d "./$model_name" ]; then
     echo "Model directory $model_name already exists in the current directory."
 elif [ -d "../Robust-Training/$model_name" ]; then
@@ -23,7 +23,7 @@ else
     exit 1
 fi
 
-model_path=./$model_name/model_e5 # Modify the epoch if needed
+model_path=./$model_name # Modify the epoch if needed
 dataset=sst # Modify the dataset if needed
 result_path=results_attack/lm_classifier/basiclm/$dataset
 
@@ -78,4 +78,4 @@ done
 # Aggregate the results
 
 python ../Robust-Training/evaluate.py \
-    --folder_path $final_results_path
+    --folder_path $final_results_path > $final_results_path/eval.out

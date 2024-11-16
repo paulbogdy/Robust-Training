@@ -3,6 +3,16 @@ import pandas as pd
 import numpy as np
 import argparse
 
+def rename_attack(attack_name):
+    attack = {
+        'textfooler': 'TextFooler',
+        'deepwordbug': 'DeepWordBugger',
+        'charmer_1': 'Charmer (K = 1)',
+        'charmer_2': 'Charmer (K = 2)',
+        'charmer_10': 'Charmer (K = 10)',
+    }
+    return attack.get(attack_name, attack_name)
+
 def calculate_metrics(file_path):
     # Read the CSV file
     df = pd.read_csv(file_path)
@@ -58,7 +68,7 @@ def summarize_attack_folder(folder_path):
             file_path = os.path.join(folder_path, file_name)
             
             metrics = calculate_metrics(file_path)
-            metrics['Attack'] = attack_name
+            metrics['Attack'] = rename_attack(attack_name)
             
             results.append(metrics)
 
@@ -84,4 +94,4 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
     
-    print(summary_table)
+    print(summary_table.to_markdown(index=False))
