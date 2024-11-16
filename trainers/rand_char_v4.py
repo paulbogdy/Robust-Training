@@ -63,7 +63,7 @@ class RandCharV4Trainer:
         self.alph_dist = args.alph_dist
         self.pos_dist = args.pos_dist
         
-        self.base_path = f'rand_char_v4_q{self.q}_ir{self.insertion_rate}_dr{self.deletion_rate}_ad{args.alph_dist}_pd{args.pos_dist}'
+        self.base_path = f'rand_char_v4_q{self.q}_ir{str(self.insertion_rate).replace('.', '_')}_dr{str(self.deletion_rate).replace('.', '_')}_ad{args.alph_dist}_pd{args.pos_dist}'
 
     @staticmethod
     def add_args(parser):
