@@ -1,7 +1,7 @@
 import argparse
 from models.model_wrapper import ModelWrapper
 from data.dataloader import load_dataset
-from utils import get_alphabet, get_alphabet_distribution
+from utils import get_alphabet
 from torch.utils.data import DataLoader
 from trainers import *
 import torch
