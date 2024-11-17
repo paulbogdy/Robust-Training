@@ -13,7 +13,7 @@ python train.py \
     --model_name bert \
     --dataset_name sst \
     --seed 0 \
-    --training_method contrastive_v4 \
+    --training_method contrastive_v5 \
     --num_epochs 4 \
     --batch_size 16 \
     --learning_rate 2e-5 \
