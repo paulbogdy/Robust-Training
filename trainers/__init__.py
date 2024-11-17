@@ -8,4 +8,5 @@ from trainers.contrastive import ContrastiveTrainer
 from trainers.contrastive_v2 import ContrastiveV2Trainer
 from trainers.contrastive_v3 import ContrastiveV3Trainer
 from trainers.contrastive_v4 import ContrastiveV4Trainer
+from trainers.contrastive_v5 import ContrastiveV5Trainer
 from trainers.rand_mask import RandMaskTrainer
