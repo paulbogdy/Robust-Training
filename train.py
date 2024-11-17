@@ -89,7 +89,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5' 'rand_mask'], 
+        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'rand_mask'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
