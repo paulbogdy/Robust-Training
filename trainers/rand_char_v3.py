@@ -76,6 +76,9 @@ class RandCharV3Trainer:
         """
         Main training loop with random character perturbations.
         """
+        model_path = f'{save_path}_{self.base_path}'
+        os.mkdir(model_path)
+
         total_steps = len(train_loader) * num_epochs
         warmup_steps = int(self.warmup_proportion * total_steps)
         
@@ -136,7 +139,6 @@ class RandCharV3Trainer:
             val_accuracy = self.model.evaluate(val_loader, self.device)
             print(f"Validation Accuracy: {val_accuracy:.4f}")
 
-            # Save model
-            epoch_save_path = os.path.join(f'{save_path}_{self.base_path}', f'model_e{epoch+1}')
-            self.model.save(epoch_save_path)
-            print(f"Model saved to {epoch_save_path}")
+        # Save the model
+        self.model.save(model_path)
+        print(f"Model saved to {model_path}")

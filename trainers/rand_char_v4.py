@@ -1,4 +1,5 @@
 import os
+import string
 from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
 from transformers import get_linear_schedule_with_warmup, AdamW
@@ -78,6 +79,21 @@ class RandCharV4Trainer:
     def compute_alphabet_distribution(self):
         if self.alph_dist == 'uniform':
             return [1 / len(self.alphabet)] * len(self.alphabet)
+        elif self.pos_dist == 'difficulty':
+            lowercase = list(string.ascii_lowercase)
+            uppercase = list(string.ascii_uppercase)
+            punctuation = list(string.punctuation)
+            whitespace = [" "] * 1
+
+            char_weights = {
+                **{char: 1 for char in lowercase},
+                **{char: 2 for char in uppercase},
+                **{char: 5 for char in punctuation},
+                **{char: 10 for char in whitespace}
+            }
+
+            weights = [char_weights.get(char, 20) for char in self.alphabet]
+            return [weight / sum(weights) for weight in weights]
     
     def compute_position_distribution(self, input_sentence):
         if self.pos_dist == 'uniform':
