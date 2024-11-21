@@ -10,4 +10,5 @@ from trainers.contrastive_v3 import ContrastiveV3Trainer
 from trainers.contrastive_v4 import ContrastiveV4Trainer
 from trainers.contrastive_v5 import ContrastiveV5Trainer
 from trainers.contrastive_v6 import ContrastiveV6Trainer
+from trainers.contrastive_v8 import ContrastiveV8Trainer
 from trainers.rand_mask import RandMaskTrainer
