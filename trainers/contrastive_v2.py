@@ -197,6 +197,9 @@ class ContrastiveV2Trainer:
         # Combine the embeddings
         embeddings = torch.cat([z_i, z_j], dim=0)  # Shape: (2N, projection_dim)
 
+        # Normalize the embeddings
+        embeddings = F.normalize(embeddings, dim=1)
+
          # Compute the similarity matrix
         similarity_matrix = torch.matmul(embeddings, embeddings.T)  # Shape: (2N, 2N)
 
