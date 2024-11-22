@@ -107,7 +107,6 @@ class RandCharV5Trainer:
     @staticmethod
     def add_args(parser):
         parser.add_argument('--q', type=int, default=5, help='Perturbation rate %(0-100)')
-        parser.add_argument('--learning_rate', type=float, default=1e-5, help='Learning rate')
         return parser
 
     def train(self, train_loader, val_loader, save_path, num_epochs):
