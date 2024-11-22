@@ -29,7 +29,7 @@ class ModelWrapper:
     def eval(self):
         self.model.eval()
 
-    def tokenize(self, texts):
+    def tokenize(self, texts, return_offsets_mapping=False):
         """
         Tokenizes a batch of texts.
         Args:
@@ -37,7 +37,7 @@ class ModelWrapper:
         Returns:
             tokenized: Tokenized batch ready for model input.
         """
-        return self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+        return self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt", return_offsets_mapping=return_offsets_mapping)
 
     def forward(self, input_ids, attention_mask=None, output_hidden_states=False):
         """
