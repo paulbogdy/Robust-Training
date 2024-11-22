@@ -138,7 +138,7 @@ class RandCharV5Trainer:
                 offsets = tokenized_inputs['offset_mapping']
 
                 self.optimizer.zero_grad()
-                embeddings = self.model.input_embeddings(input_ids)
+                embeddings = self.model.input_embeddings(input_ids).detach().clone().requires_grad_(True)
                 outputs = self.model.forward_embeddings(embeddings, attention_mask=attention_mask)
                 loss = self.loss_fn(outputs.logits, labels)
                 loss.backward(retain_graph=True)
