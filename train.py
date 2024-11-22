@@ -48,6 +48,8 @@ def main(args):
         trainer = RandCharV4Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'rand_char_v5':
         trainer = RandCharV5Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
+    elif args.training_method == 'rand_char_v6':
+        trainer = RandCharV6Trainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'contrastive':
         trainer = ContrastiveTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'contrastive_v2':
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask'], 
+        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
@@ -128,6 +130,8 @@ if __name__ == "__main__":
         parser = RandCharV4Trainer.add_args(parser)
     elif args.training_method == 'rand_char_v5':
         parser = RandCharV5Trainer.add_args(parser)
+    elif args.training_method == 'rand_char_v6':
+        parser = RandCharV6Trainer.add_args(parser)
     elif args.training_method == 'contrastive':
         parser = ContrastiveTrainer.add_args(parser)
     elif args.training_method == 'contrastive_v2':
