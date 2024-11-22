@@ -56,13 +56,16 @@ class ContrastiveV7Trainer:
 
         self.q = args.q  # Perturbation rate
         self.alpha = args.alpha  # Weight for contrastive loss
+        self.beta = args.beta  # Weight for temperature regularization
 
         # Get hidden size from model
         hidden_size = self.model.model.config.hidden_size
         projection_dim = args.projection_dim
 
         self.temp_proj = nn.Sequential(
-            
+            nn.Linear(projection_dim, projection_dim),
+            nn.ReLU(),
+            nn.Linear(projection_dim, projection_dim)
         )
 
         # Define projection head
@@ -87,6 +90,7 @@ class ContrastiveV7Trainer:
     def add_args(parser):
         parser.add_argument('--q', type=int, default=5, help='Perturbation rate %(0-100)')
         parser.add_argument('--alpha', type=float, default=0.5, help='Weight for contrastive loss')
+        parser.add_argument('--beta', type=float, default=0.5, help='Weight for temperature regularization')
         parser.add_argument('--projection_dim', type=int, default=128, help='Projection dimension for contrastive loss')
         return parser
 
@@ -185,43 +189,8 @@ class ContrastiveV7Trainer:
         print(f"Model and projection head saved to {model_path}")
 
     def contrastive_loss_fn(self, z_i, z_j):
-        """
-        Compute the InfoNCE loss for contrastive learning given two sets of embeddings.
+        positive_similarity = F.cosine_similarity(z_i, z_j, dim=-1)
+        
 
-        Args:
-            z_i (Tensor): Embeddings from the first set (batch_size, projection_dim).
-            z_j (Tensor): Embeddings from the second set (batch_size, projection_dim).
-            temperature (float): Temperature parameter for scaling.
 
-        Returns:
-            Tensor: The computed InfoNCE loss.
-        """
-        # Combine the embeddings
-        embeddings = torch.cat([z_i, z_j], dim=0)  # Shape: (2N, projection_dim)
 
-        # Normalize the embeddings
-        embeddings = F.normalize(embeddings, dim=1)
-
-         # Compute the similarity matrix
-        similarity_matrix = torch.matmul(embeddings, embeddings.T)  # Shape: (2N, 2N)
-
-        # Create labels
-        batch_size = z_i.size(0)
-        labels = torch.arange(batch_size).repeat(2)
-        labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-        labels = labels.to(self.device)
-
-        # Mask to remove self-similarities
-        mask = torch.eye(labels.shape[0], dtype=torch.bool).to(self.device)
-        labels = labels[~mask].view(labels.shape[0], -1)
-        similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
-
-        positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
-
-        negatives = similarity_matrix[~labels.bool()].view(labels.shape[0], -1)
-
-        logits = torch.cat([positives, negatives], dim=1)
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.device)
-
-        logits /= self.temperature
-        return F.cross_entropy(logits, labels)
