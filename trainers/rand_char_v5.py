@@ -144,7 +144,7 @@ class RandCharV5Trainer:
                 loss.backward(retain_graph=True)
 
                 # Compute gradients for token embeddings
-                token_gradients = embeddings.grad
+                token_gradients = embeddings.grad.norm(dim=-1)
 
                 # Map gradients to character-level distributions
                 char_distributions = [
