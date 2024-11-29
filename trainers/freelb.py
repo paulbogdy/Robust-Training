@@ -55,8 +55,10 @@ class FreeLBTrainer:
                 acc_grad = None
                 acc_loss = 0
                 for t in range(self.k):
-                    perturbed_input = embeddings + perturbation
+                    start_emb = embeddings.detach()
+                    start_emb.requires_grad = True
                     self.model.model.zero_grad()
+                    perturbed_input = start_emb + perturbation
                     outputs = self.model.forward_embeddings(input_embeds=perturbed_input, attention_mask=attention_mask)
                     loss = self.loss_fn(outputs.logits, labels)
 
