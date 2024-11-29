@@ -49,7 +49,7 @@ class FreeLBTrainer:
 
                 embeddings = self.model.input_embeddings(input_ids)
                 batch_size, seq_len, emb_dim = embeddings.size()
-                perturbation = torch.rand_like(embeddings).uniform_(-self.epsilon, self.epsilon) / torch.sqrt(seq_len * emb_dim)
+                perturbation = torch.rand_like(embeddings).uniform_(-self.epsilon, self.epsilon) / torch.sqrt(torch.tensor(seq_len * emb_dim, dtype=torch.float32))
                 perturbation.requires_grad = True
 
                 acc_grad = None
