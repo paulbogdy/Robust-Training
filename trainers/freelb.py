@@ -2,15 +2,19 @@ import os
 from pathlib import Path
 from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
+from transformers import get_linear_schedule_with_warmup, AdamW
 from models.model_wrapper import ModelWrapper
+from torch.nn.utils import clip_grad_norm_
 import torch
 
 class FreeLBTrainer:
     def __init__(self, model_wrapper: ModelWrapper, device, args):
         self.model = model_wrapper
         self.device = device
-        self.learning_rate = args.learning_rate
+        self.optimizer = AdamW(self.model.parameters(), lr=args.learning_rate, weight_decay=0.01)
         self.loss_fn = CrossEntropyLoss()
+        self.warmup_proportion = 0.1
+        self.max_grad_norm = 1.0
 
         self.alpha = args.alpha
         self.epsilon = args.epsilon
@@ -24,6 +28,12 @@ class FreeLBTrainer:
         parser.add_argument('--epsilon', type=float, default=0.6)
         parser.add_argument('--k', type=int, default=10)
         return parser
+    
+    def project(self, delta):
+        norm = torch.norm(delta.view(delta.size(0), -1), p=2, dim=1).view(-1, 1, 1)
+        mask = (norm > self.epsilon).float()
+        delta = (delta * (self.epsilon / norm * mask + (1 - mask))).detach()
+        return delta
 
     def train(self, 
               train_loader,
@@ -33,6 +43,13 @@ class FreeLBTrainer:
         
         model_path = f'{save_path}_{self.base_path}'
         os.makedirs(model_path, exist_ok=True)
+
+        # Total steps for learning rate scheduling
+        total_steps = len(train_loader) * num_epochs
+        warmup_steps = int(self.warmup_proportion * total_steps)
+        
+        # Learning rate schedulers
+        scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
 
         for epoch in range(num_epochs):
             total_loss = 0
@@ -47,46 +64,42 @@ class FreeLBTrainer:
                 input_ids = tokenized_inputs['input_ids'].to(self.device)
                 attention_mask = tokenized_inputs['attention_mask'].to(self.device)
 
+                self.optimizer.zero_grad()
+                self.model.zero_grad()
+
                 embeddings = self.model.input_embeddings(input_ids)
                 batch_size, seq_len, emb_dim = embeddings.size()
-                perturbation = torch.rand_like(embeddings).uniform_(-self.epsilon, self.epsilon) / torch.sqrt(torch.tensor(seq_len * emb_dim, dtype=torch.float32))
-                perturbation.requires_grad = True
-
-                acc_grad = None
+                delta = torch.rand_like(embeddings).uniform_(-self.epsilon, self.epsilon) / torch.sqrt(torch.tensor(seq_len * emb_dim, dtype=torch.float32))
+                
                 acc_loss = 0
                 for t in range(self.k):
-                    start_emb = embeddings.detach()
-                    start_emb.requires_grad = True
-                    self.model.model.zero_grad()
-                    perturbed_input = start_emb + perturbation
-                    outputs = self.model.forward_embeddings(input_embeds=perturbed_input, attention_mask=attention_mask)
-                    loss = self.loss_fn(outputs.logits, labels)
+                    delta.requires_grad_()
+                    outputs = self.model.forward_embeddings(input_embeds=embeddings + delta, attention_mask=attention_mask)
 
-                    loss.backward()
+                    loss = self.loss_fn(outputs.logits, labels)/self.k
                     acc_loss += loss.item()
-                    if acc_grad is None:
-                        acc_grad = [
-                            (param.grad.clone() / self.k if param.grad is not None else torch.zeros_like(param))
-                            for param in self.model.model.parameters()
-                        ]
-                    else:
-                        for i, param in enumerate(self.model.model.parameters()):
-                            if param.grad is not None:
-                                acc_grad[i] += param.grad.clone() / self.k
+                    loss.backward()
 
+                    if t == self.k - 1:
+                        break
 
-                    grad_adv = perturbation.grad.detach()
-                    frob_norm = torch.norm(grad_adv.view(batch_size, -1), dim=1).view(batch_size, 1, 1) + 1e-8
-                    perturbation = (perturbation + self.alpha * grad_adv/frob_norm).detach()
-                    perturbation.requires_grad = True
+                    delta_grad = delta.grad.clone().detach()
 
-                for i, param in enumerate(self.model.model.parameters()):
-                    if param.grad is not None:
-                        param.data -= self.learning_rate * acc_grad[i]
+                    denorm = torch.norm(delta_grad.view(delta_grad.size(0), -1), dim=1).view(-1, 1, 1)
+                    denorm = torch.clamp(denorm, min=1e-8)
+                    delta = (delta + self.alpha * delta_grad / denorm).detach()
+                    delta = self.project(delta)
+
+                    embeddings = self.model.input_embeddings(input_ids)
+
+                clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+                self.optimizer.step()
+
+                scheduler.step()
 
                 # Logging loss
-                total_loss += loss.item()
-                pbar.set_postfix({'Loss': f'{loss.item():.4f}'})
+                total_loss += acc_loss.item()
+                pbar.set_postfix({'Loss': f'{acc_loss.item():.4f}'})
 
             avg_loss = total_loss / len(train_loader)
             print(f"Epoch {epoch+1}/{num_epochs}, Average Loss: {avg_loss}")
