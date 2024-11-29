@@ -98,8 +98,8 @@ class FreeLBTrainer:
                 scheduler.step()
 
                 # Logging loss
-                total_loss += acc_loss.item()
-                pbar.set_postfix({'Loss': f'{acc_loss.item():.4f}'})
+                total_loss += acc_loss
+                pbar.set_postfix({'Loss': f'{acc_loss:.4f}'})
 
             avg_loss = total_loss / len(train_loader)
             print(f"Epoch {epoch+1}/{num_epochs}, Average Loss: {avg_loss}")
