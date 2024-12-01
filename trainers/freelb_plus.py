@@ -67,7 +67,7 @@ class FreeLBPlusTrainer:
                 
                 acc_loss = 0
                 attack_iters = self.k
-                if warmup_steps < epoch * len(train_loader) + batch_idx:
+                if warmup_steps > epoch * len(train_loader) + batch_idx:
                     attack_iters = 2
 
                 for t in range(attack_iters):
