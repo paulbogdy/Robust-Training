@@ -6,6 +6,12 @@ from transformers import get_linear_schedule_with_warmup, AdamW
 from models.model_wrapper import ModelWrapper
 from torch.nn.utils import clip_grad_norm_
 import torch
+import random
+
+def set_seed(seed):
+    """Set the random seed for dropout."""
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 class FreeLBTrainer:
     def __init__(self, model_wrapper: ModelWrapper, device, args):
@@ -72,6 +78,9 @@ class FreeLBTrainer:
                 delta = torch.rand_like(embeddings).uniform_(-self.epsilon, self.epsilon) / torch.sqrt(torch.tensor(seq_len * emb_dim, dtype=torch.float32))
                 
                 acc_loss = 0
+
+                random_seed = random.randint(0, 100000)
+                set_seed(random_seed)
                 for t in range(self.k):
                     delta.requires_grad_()
                     outputs = self.model.forward_embeddings(input_embeds=embeddings + delta, attention_mask=attention_mask)
