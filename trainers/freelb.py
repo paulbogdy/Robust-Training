@@ -80,9 +80,9 @@ class FreeLBTrainer:
                 acc_loss = 0
 
                 random_seed = random.randint(0, 100000)
-                set_seed(random_seed)
                 for t in range(self.k):
                     delta.requires_grad_()
+                    set_seed(random_seed)
                     outputs = self.model.forward_embeddings(input_embeds=embeddings + delta, attention_mask=attention_mask)
 
                     loss = self.loss_fn(outputs.logits, labels)/self.k
