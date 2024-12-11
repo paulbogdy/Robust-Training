@@ -17,6 +17,9 @@ class ModelWrapper:
         self.tokenizer = AutoTokenizer.from_pretrained(model)
         self.model = AutoModelForSequenceClassification.from_pretrained(model, num_labels=num_labels)
 
+    def num_labels(self):
+        return self.model.config.num_labels
+
     def parameters(self):
         return self.model.parameters()
 
