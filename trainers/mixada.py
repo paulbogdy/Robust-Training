@@ -27,7 +27,7 @@ class MixAdaTrainer:
 
         self.alpha = args.alpha
 
-        self.base_path = f'mixada_{args.aug_type}'
+        self.base_path = f'mixada_{args.aug_type}_a{str(self.alpha).replace(".", "_")}'
 
     @staticmethod
     def add_args(parser):
@@ -147,7 +147,7 @@ class MixAdaTrainer:
                 loss_ce = self.loss_fn(outputs.logits, labels)
 
                 loss = loss_ce + loss_mix
-                
+
                 # Backward pass and optimization
                 loss.backward()
                 clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
