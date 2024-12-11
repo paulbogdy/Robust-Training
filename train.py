@@ -70,6 +70,8 @@ def main(args):
         trainer = FreeLBTrainer(model_wrapper, device, args)
     elif args.training_method == 'freelb_plus':
         trainer = FreeLBPlusTrainer(model_wrapper, device, args)
+    elif args.training_method == 'ada':
+        trainer = AdaTrainer(model_wrapper, device, args)
     elif args.training_method == 'base':
         trainer = BaseTrainer(model_wrapper, device, args)
 
@@ -101,7 +103,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask', 'freelb', 'freelb_plus'], 
+        choices=['adv_emb', 'rand_char', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask', 'freelb', 'freelb_plus', 'ada'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
@@ -156,6 +158,8 @@ if __name__ == "__main__":
         parser = FreeLBTrainer.add_args(parser)
     elif args.training_method == 'freelb_plus':
         parser = FreeLBPlusTrainer.add_args(parser)
+    elif args.training_method == 'ada':
+        parser = AdaTrainer.add_args(parser)
 
     args = parser.parse_args()
     main(args)

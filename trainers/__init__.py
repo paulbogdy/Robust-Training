@@ -16,3 +16,4 @@ from trainers.contrastive_v8 import ContrastiveV8Trainer
 from trainers.rand_mask import RandMaskTrainer
 from trainers.freelb import FreeLBTrainer
 from trainers.freelb_plus import FreeLBPlusTrainer
+from trainers.ada import AdaTrainer
