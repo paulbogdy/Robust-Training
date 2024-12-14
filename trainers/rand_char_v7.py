@@ -56,6 +56,7 @@ class RandCharV7Trainer:
         self.loss_fn = CrossEntropyLoss()
         self.warmup_proportion = 0.1
         self.max_grad_norm = 1.0
+        self.alphabet = alphabet
 
         self.q = args.q
         self.alpha = args.alpha
