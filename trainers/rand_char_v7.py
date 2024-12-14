@@ -77,8 +77,6 @@ class RandCharV7Trainer:
         model_path = f'{save_path}_{self.base_path}'
         os.mkdir(model_path)
 
-        train_loader = self.augment_train_data(train_loader)
-
         # Total steps for learning rate scheduling
         total_steps = len(train_loader) * num_epochs
         warmup_steps = int(self.warmup_proportion * total_steps)
