@@ -101,6 +101,7 @@ class RandCharV7Trainer:
 
                 if (self.pert_mode == 'aug'):
                     inputs += perturbed_inputs
+                    labels = torch.cat([labels, labels])
                 else:
                     inputs = perturbed_inputs
 
