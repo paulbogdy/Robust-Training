@@ -38,6 +38,8 @@ def main(args):
     # Select the training method and initialize accordingly
     if args.training_method == 'adv_emb':
         trainer = AdvEmbTrainer(model_wrapper, device, args)
+    elif args.training_method == 'grad_l2':
+        trainer = GradL2Trainer(model_wrapper, device, args)
     elif args.training_method == 'fgsm':
         trainer = FgsmTrainer(model_wrapper, device, args)
     elif args.training_method == 'rand_char':
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'fgsm', 'rand_char', 'rand_char_freq', 'rand_char_entropy', 'rand_noise', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'rand_char_v7', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask', 'freelb', 'freelb_plus', 'ada', 'mixada'], 
+        choices=['adv_emb', 'fgsm', 'grad_l2', 'rand_char', 'rand_char_freq', 'rand_char_entropy', 'rand_noise', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'rand_char_v7', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask', 'freelb', 'freelb_plus', 'ada', 'mixada'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
@@ -138,6 +140,8 @@ if __name__ == "__main__":
     args, remaining_args = parser.parse_known_args()
     if args.training_method == 'adv_emb':
         parser = AdvEmbTrainer.add_args(parser)
+    elif args.training_method == 'grad_l2':
+        parser = GradL2Trainer.add_args(parser)
     elif args.training_method == 'fgsm':
         parser = FgsmTrainer.add_args(parser)
     elif args.training_method == 'rand_char':
