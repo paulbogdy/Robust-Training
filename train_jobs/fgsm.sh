@@ -13,7 +13,7 @@ python train.py \
     --model_name bert \
     --dataset_name sst \
     --seed 0 \
-    --training_method adv_emb \
+    --training_method fgsm \
     --num_epochs 4 \
     --batch_size 16 \
     --learning_rate 2e-5 \
