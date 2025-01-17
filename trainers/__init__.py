@@ -10,6 +10,7 @@ from trainers.rand_char_v5 import RandCharV5Trainer
 from trainers.rand_char_v6 import RandCharV6Trainer
 from trainers.rand_char_v7 import RandCharV7Trainer
 from trainers.base import BaseTrainer
+from trainers.fgsm import FgsmTrainer
 from trainers.contrastive import ContrastiveTrainer
 from trainers.contrastive_v2 import ContrastiveV2Trainer
 from trainers.contrastive_v3 import ContrastiveV3Trainer

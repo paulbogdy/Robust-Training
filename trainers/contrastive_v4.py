@@ -92,7 +92,7 @@ class ContrastiveV4Trainer:
                 embeddings_matrix_grad = self.model.model.base_model.embeddings.word_embeddings.weight.grad
 
                 # Adversarial perturbation
-                perturbation = perturbation = self.epsilon * embeddings_matrix_grad.sign()
+                perturbation = self.epsilon * embeddings_matrix_grad.sign()
 
                 with torch.no_grad():
                     perturbed_embeddings = (
