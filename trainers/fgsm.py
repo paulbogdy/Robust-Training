@@ -59,7 +59,7 @@ class FgsmTrainer:
                 self.optimizer.zero_grad()
 
                 # Step 1: Get input embeddings
-                embeddings = self.model.input_embeddings(input_ids)
+                embeddings = self.model.input_embeddings(input_ids).detach()
                 embeddings.requires_grad = True
 
                 # Step 2: Forward pass for clean embeddings (Optional)
