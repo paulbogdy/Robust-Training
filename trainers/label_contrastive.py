@@ -190,7 +190,7 @@ class LabelContrastiveTrainer:
         similarity_matrix = torch.matmul(embeddings, embeddings.T)  # Shape: (2N, 2N)
 
         # Mask to remove self-similarities
-        mask = torch.eye(labels.shape[0], dtype=torch.bool).to(self.device)
+        mask = torch.eye(labels.shape[0]*2, dtype=torch.bool).to(self.device)
         similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
 
         # Compute unique labels
