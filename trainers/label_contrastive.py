@@ -182,6 +182,7 @@ class LabelContrastiveTrainer:
         """
         # Combine the embeddings
         embeddings = torch.cat([z_i, z_j], dim=0)  # Shape: (2N, projection_dim)
+        extended_labels = labels.repeat(2)  # Shape: (2N,)
 
         # Normalize the embeddings
         embeddings = F.normalize(embeddings, dim=1)
@@ -190,17 +191,17 @@ class LabelContrastiveTrainer:
         similarity_matrix = torch.matmul(embeddings, embeddings.T)  # Shape: (2N, 2N)
 
         # Mask to remove self-similarities
-        mask = torch.eye(labels.shape[0]*2, dtype=torch.bool).to(self.device)
+        mask = torch.eye(extended_labels.shape[0], dtype=torch.bool).to(self.device)
         similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
 
         # Compute unique labels
-        unique_labels, counts = torch.unique(labels, return_counts=True)
+        unique_labels, counts = torch.unique(extended_labels, return_counts=True)
 
         loss = None
 
         for label in unique_labels:
             if counts[label] >= 2:
-                positive_rows = labels == label
+                positive_rows = extended_labels == label
                 positive_mat = (positive_rows.unsqueeze(0) & positive_rows.unsqueeze(1)).float()
                 positive_mat = positive_mat[~mask].view(positive_mat.shape[0], -1)
                 positive_mat = positive_mat[positive_rows]
