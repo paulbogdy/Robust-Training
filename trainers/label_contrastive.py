@@ -2,6 +2,7 @@ import torch
 import os
 from tqdm import tqdm
 from torch import nn
+from torch.nn import CrossEntropyLoss
 from transformers import get_linear_schedule_with_warmup, AdamW
 from torch.nn.utils import clip_grad_norm_
 from models.model_wrapper import ModelWrapper
@@ -125,6 +126,7 @@ class LabelContrastiveTrainer:
                     attention_mask=attention_mask_unperturbed,
                     output_hidden_states=True
                 )
+                unperturbed_logits = outputs_unperturbed.logits
 
                 # Forward pass for perturbed inputs to obtain [CLS] embeddings
                 outputs_perturbed = self.model.forward(
@@ -132,6 +134,10 @@ class LabelContrastiveTrainer:
                     attention_mask=attention_mask_perturbed,
                     output_hidden_states=True
                 )
+                perturbed_logits = outputs_perturbed.logits
+
+                # Calculate cross-entropy loss for unperturbed sample
+                cross_entropy_loss = (self.loss_fn(unperturbed_logits, labels) + self.loss_fn(perturbed_logits, labels)) / 2
 
                 # Extract [CLS] embeddings from the last hidden state of both perturbed and unperturbed inputs
                 cls_embedding_unperturbed = outputs_unperturbed.hidden_states[-1][:, 0, :]  # [CLS] embedding for unperturbed
@@ -143,15 +149,18 @@ class LabelContrastiveTrainer:
 
                 contrastive_loss = self.contrastive_loss_fn(z_i, z_j, labels)
 
+                # Total loss
+                total_loss_value = (1 - self.alpha) * cross_entropy_loss + self.alpha * contrastive_loss
+
                 # Backward pass and optimization
-                contrastive_loss.backward()
+                total_loss_value.backward()
                 clip_grad_norm_(list(self.model.parameters()) + list(self.projection_head.parameters()), self.max_grad_norm)
                 self.optimizer.step()
                 scheduler.step()
 
                 # Log batch loss
-                total_loss += contrastive_loss.item()
-                pbar.set_postfix({'Loss': f'{contrastive_loss.item():.4f}'})
+                total_loss += total_loss_value.item()
+                pbar.set_postfix({'Loss': f'{total_loss_value.item():.4f}', 'CE Loss': f'{cross_entropy_loss.item():.4f}', 'Contrastive Loss': f'{contrastive_loss.item():.4f}'})
 
             # Epoch logging
             avg_loss = total_loss / len(train_loader)
