@@ -55,6 +55,7 @@ class LabelContrastiveTrainer:
         self.alphabet = alphabet
 
         self.q = args.q  # Perturbation rate
+        self.alpha = args.alpha  # Weight for contrastive loss
         self.temperature = args.temperature  # Temperature parameter for contrastive loss
 
         # Get hidden size from model
@@ -74,11 +75,15 @@ class LabelContrastiveTrainer:
             lr=args.learning_rate, weight_decay=0.01
         )
 
+        # Define loss functions
+        self.loss_fn = CrossEntropyLoss()
+
         self.base_path = f'label_contrastive_q{self.q}_t{str(self.temperature).replace(".", "_")}_p{projection_dim}'
 
     @staticmethod
     def add_args(parser):
         parser.add_argument('--q', type=int, default=5, help='Perturbation rate %(0-100)')
+        parser.add_argument('--alpha', type=float, default=0.5, help='Weight for contrastive loss')
         parser.add_argument('--temperature', type=float, default=0.07, help='Temperature parameter for contrastive loss')
         parser.add_argument('--projection_dim', type=int, default=128, help='Projection dimension for contrastive loss')
         return parser

@@ -15,8 +15,9 @@ python train.py \
     --seed 0 \
     --training_method label_contrastive \
     --num_epochs 4 \
-    --batch_size 32 \
+    --batch_size 16 \
     --learning_rate 2e-5 \
-    --q 10 \
+    --q 15 \
+    --alpha 0.5 \
     --temperature 0.07 \
     --projection_dim 300 \
