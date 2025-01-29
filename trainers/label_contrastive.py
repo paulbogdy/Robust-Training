@@ -212,7 +212,8 @@ class LabelContrastiveTrainer:
                 negative_sim = similarity_mat[~positive_mat.bool()].view(positive_mat.shape[0], -1)
 
                 logits = torch.cat([positive_sim, negative_sim], dim=1)
-                positions = torch.arange(positive_sim.shape[1], dtype=torch.long, device=self.device).expand(positive_sim.shape[0], -1)
+                positions = torch.arange(logits.shape[0], dtype=torch.long).to(self.device)
+                positions[positions >= positive_sim.shape[0]] = -1
 
                 logits /= self.temperature
 
