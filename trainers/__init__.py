@@ -13,6 +13,7 @@ from trainers.rand_char_v7 import RandCharV7Trainer
 from trainers.base import BaseTrainer
 from trainers.fgsm import FgsmTrainer
 from trainers.grad_l2 import GradL2Trainer
+from label_contrastive import LabelContrastiveTrainer
 from trainers.contrastive import ContrastiveTrainer
 from trainers.contrastive_v2 import ContrastiveV2Trainer
 from trainers.contrastive_v3 import ContrastiveV3Trainer
