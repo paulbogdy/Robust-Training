@@ -123,7 +123,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--training_method', 
         type=str, 
-        choices=['adv_emb', 'fgsm', 'label_contrastive', 'label_contrastive_mb' 'grad_l2', 'rand_char', 'rand_char_freq', 'rand_char_entropy', 'rand_char_high_entropy', 'rand_noise', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'rand_char_v7', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask', 'freelb', 'freelb_plus', 'ada', 'mixada'], 
+        choices=['adv_emb', 'fgsm', 'label_contrastive', 'label_contrastive_mb', 'grad_l2', 'rand_char', 'rand_char_freq', 'rand_char_entropy', 'rand_char_high_entropy', 'rand_noise', 'rand_char_v2', 'rand_char_v3', 'rand_char_v4', 'rand_char_v5', 'rand_char_v6', 'rand_char_v7', 'base', 'contrastive', 'contrastive_v2', 'contrastive_v3', 'contrastive_v4', 'contrastive_v5', 'contrastive_v6', 'contrastive_v8', 'rand_mask', 'freelb', 'freelb_plus', 'ada', 'mixada'], 
         required=True,
         help='Training method to use.')
     parser.add_argument(
