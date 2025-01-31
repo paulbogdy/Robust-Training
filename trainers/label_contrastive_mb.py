@@ -254,8 +254,8 @@ class LabelContrastiveMBTrainer:
             logits /= self.temperature
 
             if loss is None:
-                loss = F.cross_entropy(logits, positions)
+                loss = F.cross_entropy(logits, positions) / positives.shape[0]
             else:
-                loss += F.cross_entropy(logits, positions)
+                loss += F.cross_entropy(logits, positions) / positives.shape[0]
 
         return loss
