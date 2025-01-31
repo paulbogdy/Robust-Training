@@ -18,4 +18,4 @@ python train.py \
     --batch_size 16 \
     --learning_rate 2e-5 \
     --q 20 \
-    --nr_iters 4 \
+    --nr_iter 4 \
