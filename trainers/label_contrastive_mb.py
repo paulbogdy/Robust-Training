@@ -237,9 +237,11 @@ class LabelContrastiveMBTrainer:
         loss = None
         unique_labels, counts = torch.unique(extended_labels, return_counts=True)
 
+        nr_classes = 0
         for label, num in zip(unique_labels, counts):
             if num.item() < 2:
                 continue
+            nr_classes += 1
             queries = z_i[labels == label]
             keys = self.bank.get_negatives(label)
 
@@ -258,4 +260,4 @@ class LabelContrastiveMBTrainer:
             else:
                 loss += F.cross_entropy(logits, positions) / positives.shape[0]
 
-        return loss
+        return loss / nr_classes
