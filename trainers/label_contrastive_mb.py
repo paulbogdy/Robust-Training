@@ -242,7 +242,7 @@ class LabelContrastiveMBTrainer:
             if num.item() < 2:
                 continue
             nr_classes += 1
-            queries = z_i[labels == label]
+            queries = embeddings[extended_labels == label]
             keys = self.bank.get_negatives(label)
 
             positives = torch.matmul(queries, queries.T) 
