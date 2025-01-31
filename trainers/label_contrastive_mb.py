@@ -9,6 +9,32 @@ from models.model_wrapper import ModelWrapper
 import torch.nn.functional as F
 import random
 
+class ClassWiseMemoryBank:
+    def __init__(self, size, feature_dim, num_classes, device):
+        self.size = size  # Maximum samples per class
+        self.device = device
+        self.num_classes = num_classes
+
+        # Create a dictionary of class-wise queues
+        self.memory = {c: torch.zeros(size, feature_dim).to(device) for c in range(num_classes)}
+        self.ptr = {c: 0 for c in range(num_classes)}  # Track insert position for each class
+
+    def update(self, features, labels):
+        """
+        Update memory bank for each class.
+        """
+        for i in range(features.shape[0]):  # Iterate through batch samples
+            c = labels[i].item()  # Get class label
+            self.memory[c][self.ptr[c] % self.size] = features[i].detach()  # Store new feature
+            self.ptr[c] = (self.ptr[c] + 1) % self.size  # FIFO update
+
+    def get_negatives(self, label):
+        """
+        Get negative samples for a given label.
+        """
+        negatives = torch.cat([self.memory[c] for c in range(self.num_classes) if c != label], dim=0)
+        return negatives
+
 def perturb_sentence(sentence, alphabet, q=5, custom_char="§"):
     N = len(sentence)
     perturbed_sentence = ''.join([char + custom_char for char in sentence])
@@ -45,7 +71,7 @@ def perturb_sentence(sentence, alphabet, q=5, custom_char="§"):
     
     return ''.join(char if char != custom_char else '' for char in perturbed_sentence)
 
-class LabelContrastiveTrainer:
+class LabelContrastiveMBTrainer:
     def __init__(self, model_wrapper: ModelWrapper, alphabet, device, args):
         self.model = model_wrapper
         self.device = device
@@ -57,10 +83,13 @@ class LabelContrastiveTrainer:
         self.q = args.q  # Perturbation rate
         self.alpha = args.alpha  # Weight for contrastive loss
         self.temperature = args.temperature  # Temperature parameter for contrastive loss
+        self.bank_size = args.bank_size  # Size of the memory bank per class
 
         # Get hidden size from model
         hidden_size = self.model.model.config.hidden_size
         projection_dim = args.projection_dim
+
+        self.bank = ClassWiseMemoryBank(self.bank_size, projection_dim, self.model.num_labels(), self.device)
 
         # Define projection head
         self.projection_head = nn.Sequential(
@@ -78,7 +107,7 @@ class LabelContrastiveTrainer:
         # Define loss functions
         self.loss_fn = CrossEntropyLoss()
 
-        self.base_path = f'label_contrastive_q{self.q}_a{str(self.alpha).replace(".","_")}_t{str(self.temperature).replace(".", "_")}_p{projection_dim}'
+        self.base_path = f'label_contrastive_mb_q{self.q}_a{str(self.alpha).replace(".","_")}_t{str(self.temperature).replace(".", "_")}_p{projection_dim}_bank{self.bank_size}'
 
     @staticmethod
     def add_args(parser):
@@ -86,6 +115,7 @@ class LabelContrastiveTrainer:
         parser.add_argument('--alpha', type=float, default=0.5, help='Weight for contrastive loss')
         parser.add_argument('--temperature', type=float, default=0.07, help='Temperature parameter for contrastive loss')
         parser.add_argument('--projection_dim', type=int, default=128, help='Projection dimension for contrastive loss')
+        parser.add_argument('--bank_size', type=int, default=256, help='Size of the memory bank pe class, the nr of negatives is (num_classes - 1) * bank_size')
         return parser
 
     def train(self, train_loader, val_loader, save_path, num_epochs):
@@ -152,6 +182,12 @@ class LabelContrastiveTrainer:
                 z_i = self.projection_head(cls_embedding_unperturbed)
                 z_j = self.projection_head(cls_embedding_perturbed)
 
+                z_i = F.normalize(z_i, dim=1)
+                z_j = F.normalize(z_j, dim=1)
+
+                self.bank.update(z_i, labels)
+                self.bank.update(z_j, labels)
+
                 contrastive_loss = self.contrastive_loss_fn(z_i, z_j, labels)
 
                 # Total loss
@@ -198,41 +234,28 @@ class LabelContrastiveTrainer:
         embeddings = torch.cat([z_i, z_j], dim=0)  # Shape: (2N, projection_dim)
         extended_labels = labels.repeat(2)  # Shape: (2N,)
 
-        # Normalize the embeddings
-        embeddings = F.normalize(embeddings, dim=1)
-
-         # Compute the similarity matrix
-        similarity_matrix = torch.matmul(embeddings, embeddings.T)  # Shape: (2N, 2N)
-
-        # Mask to remove self-similarities
-        mask = torch.eye(extended_labels.shape[0], dtype=torch.bool).to(self.device)
-        similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
-
-        # Compute unique labels
+        loss = None
         unique_labels, counts = torch.unique(extended_labels, return_counts=True)
 
-        loss = None
+        for label, num in zip(unique_labels, counts):
+            if num.item() < 2:
+                continue
+            queries = z_i[labels == label]
+            keys = self.bank.get_negatives(label)
 
-        for label in unique_labels:
-            if label in unique_labels and counts[label] >= 2:
-                positive_rows = extended_labels == label
-                positive_mat = (positive_rows.unsqueeze(0) & positive_rows.unsqueeze(1)).float()
-                positive_mat = positive_mat[~mask].view(positive_mat.shape[0], -1)
-                positive_mat = positive_mat[positive_rows]
+            positives = torch.matmul(queries, queries.T) 
+            mask = torch.eye(positives.shape[0], dtype=torch.bool).to(self.device)
+            positives = positives[~mask].view(positives.shape[0], -1)
+            negatives = torch.matmul(queries, keys.T)
 
-                similarity_mat = similarity_matrix[positive_rows]
+            logits = torch.cat([positives, negatives], dim=1)
+            positions = torch.arange(positives.shape[0], dtype=torch.long).to(self.device)
 
-                positive_sim = similarity_mat[positive_mat.bool()].view(positive_mat.shape[0], -1)
-                negative_sim = similarity_mat[~positive_mat.bool()].view(positive_mat.shape[0], -1)
+            logits /= self.temperature
 
-                logits = torch.cat([positive_sim, negative_sim], dim=1)
-                positions = torch.arange(logits.shape[0], dtype=torch.long).to(self.device)
-
-                logits /= self.temperature
-
-                if loss is None:
-                    loss = F.cross_entropy(logits, positions)
-                else:
-                    loss += F.cross_entropy(logits, positions)
+            if loss is None:
+                loss = F.cross_entropy(logits, positions)
+            else:
+                loss += F.cross_entropy(logits, positions)
 
         return loss
