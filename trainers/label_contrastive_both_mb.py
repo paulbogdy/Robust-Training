@@ -144,7 +144,7 @@ class LabelContrastiveBothMBTrainer:
                 labels = batch['label'].to(self.device)
 
                 # Perturb sentences for character-level robustness
-                char_perturbed_inputs = [self.perturb_sentence(sentence, q=self.q) for sentence in unperturbed_inputs]
+                char_perturbed_inputs = [perturb_sentence(sentence, self.alphabet, q=self.q) for sentence in unperturbed_inputs]
 
                 # Tokenize all inputs
                 unperturbed_tokenized = self.model.tokenize(unperturbed_inputs)
