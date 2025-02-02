@@ -48,6 +48,12 @@ def main(args):
         trainer = LabelContrastiveTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'label_contrastive_mb':
         trainer = LabelContrastiveMBTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
+    elif args.training_method == 'label_contrastive_simple_mb':
+        trainer = LabelContrastiveSimpleMBTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
+    elif args.training_method == 'label_contrastive_embedding_mb':
+        trainer = LabelContrastiveEmbeddingMBTrainer(model_wrapper, device, args)
+    elif args.training_method == 'label_contrastive_both_mb':
+        trainer = LabelContrastiveBothMBTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'rand_char_freq':
         trainer = RandCharFreqTrainer(model_wrapper, get_alphabet(args.dataset_name), device, args)
     elif args.training_method == 'rand_char_entropy':
@@ -158,6 +164,12 @@ if __name__ == "__main__":
         parser = LabelContrastiveTrainer.add_args(parser)
     elif args.training_method == 'label_contrastive_mb':
         parser = LabelContrastiveMBTrainer.add_args(parser)
+    elif args.training_method == 'label_contrastive_simple_mb':
+        parser = LabelContrastiveSimpleMBTrainer.add_args(parser)
+    elif args.training_method == 'label_contrastive_embedding_mb':
+        parser = LabelContrastiveEmbeddingMBTrainer.add_args(parser)
+    elif args.training_method == 'label_contrastive_both_mb':
+        parser = LabelContrastiveBothMBTrainer.add_args(parser)
     elif args.training_method == 'rand_char_freq':
         parser = RandCharFreqTrainer.add_args(parser)
     elif args.training_method == 'rand_char_entropy':
